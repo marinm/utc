@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>UTC Clock</title>
+        <meta charset="utf-8">
+
+        <style>
+            body {
+                background-color: black;
+                margin: 2em 0 0 0;
+                font-size: 5mm;
+                font-family: sans-serif;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
+            #clock {
+                display: block;
+            }
+
+            #now {
+                margin: auto;
+                padding: 2em;
+                text-align: left;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="clock"></canvas>
+
+        <div id="now"></div>
+
+        <script>
+            const TICK_INTERVAL = 20;
+            const CLOCK_WIDTH = 500;
+            const CLOCK_HEIGHT = 500;
+
+            const CENTER_X = CLOCK_WIDTH / 2.0;
+            const CENTER_Y = CLOCK_HEIGHT / 2.0;
+            const RADIUS = CLOCK_WIDTH / 2;
+
+            const timer = setInterval(tick, TICK_INTERVAL);
+
+            const clock = document.querySelector("#clock");
+            clock.width = CLOCK_WIDTH;
+            clock.height = CLOCK_HEIGHT;
+
+            const clock2d = document.querySelector("#clock").getContext('2d');
+
+            function tick() {
+                const time = utc_now();            
+                document.querySelector("#now").innerHTML = utc_time_formatted(time);
+                draw_clock(time);
+            }
+
+            function utc_now() {
+                return new Date(Date.now());
+            }
+
+            function utc_time_formatted(utc_time) {
+                const YYYY = String( utc_time.getUTCFullYear()     );
+                const MM   = String( utc_time.getUTCMonth() + 1    ).padStart(2, '0');
+                const DD   = String( utc_time.getUTCDate()         ).padStart(2, '0');
+                const hh   = String( utc_time.getUTCHours()        ).padStart(2, '0');
+                const mm   = String( utc_time.getUTCMinutes()      ).padStart(2, '0');
+                const ss   = String( utc_time.getUTCSeconds()      ).padStart(2, '0');
+                const ms   = String( utc_time.getUTCMilliseconds() ).substring(0, 2).padStart(2, '0');
+
+                return `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}.${ms}`;
+            }
+
+            function draw_clock(time) {
+
+                const ss = time.getUTCSeconds();
+                const ms = time.getUTCMilliseconds();
+
+                clock2d.fillStyle = "#000000";
+                clock2d.fillRect(0, 0, CLOCK_WIDTH, CLOCK_HEIGHT);
+
+                clock2d.strokeStyle = "#FFFFFF";
+                clock2d.lineWidth = 1;
+
+                clock2d.beginPath();
+
+                const x = CENTER_X;
+                const y = CENTER_Y;
+                const radius = RADIUS;
+                const start = 0;
+                const end = 2 * Math.PI;
+                clock2d.arc(x, y, radius, start, end, true);
+
+                clock2d.stroke();
+
+                // The clock has 60 * 1000 ms positions
+                // With 0 at the top
+
+                const FULL_CIRCLE = 2.0 * Math.PI;
+                const QUARTER_CIRCLE = FULL_CIRCLE / 4.0;
+
+                const relative_arm_angle = ((ss * 1000) + ms) / (60.0 * 1000.0);
+                //console.log(ss, ms, relative_arm_angle);
+                const arm_angle = (relative_arm_angle * FULL_CIRCLE) - QUARTER_CIRCLE;
+
+                const arm_x = CENTER_X + (Math.cos(arm_angle) * RADIUS);
+                const arm_y = CENTER_Y + (Math.sin(arm_angle) * RADIUS);
+
+                clock2d.strokeStyle = "orange";
+                clock2d.beginPath();
+                clock2d.moveTo(CENTER_X, CENTER_Y);
+                clock2d.lineTo(arm_x, arm_y);
+                clock2d.stroke();
+            }
+        </script>
+    </body>
+</html>
