@@ -40,10 +40,36 @@
             const SECOND_ARM_COLOR              = 'orange';
             const SECOND_ARM_FIXTURE_RADIUS     = 0.02;
             const SECOND_ARM_TAIL_LENGTH        = 0.20;
+
+            const HOUR_ARM_THICKNESS            = 2.00;
+            const HOUR_ARM_LENGTH               = 0.92;
+            const HOUR_ARM_COLOR                = '#dddddd';
+            const HOUR_ARM_FIXTURE_RADIUS       = 0.02;
+            const HOUR_ARM_TAIL_LENGTH          = 0.10;
             
             const QUARTER_SECOND_TICK_LENGTH    = 0.04;
             const QUARTER_SECOND_TICK_THICKNESS = 3.50;
             const QUARTER_SECOND_TICK_COLOR     = '#555555';
+
+            const HOUR_TICK_LENGTH              = 0.08;
+            const HOUR_TICK_THICKNESS           = 3.50;
+            const HOUR_TICK_COLOR               = '#ffffff';
+
+            const HOUR_LABEL_FONT               = '18px Courier New';
+            const HOUR_LABEL_COLOR              = '#ffffff';
+            const HOUR_LABEL_RADIUS             = 0.85;
+
+            const HALF_HOUR_TICK_LENGTH         = 0.08;
+            const HALF_HOUR_TICK_THICKNESS      = 2.50;
+            const HALF_HOUR_TICK_COLOR          = '#555555';
+
+            const TEN_MINUTE_TICK_LENGTH         = 0.04;
+            const TEN_MINUTE_TICK_THICKNESS      = 2.5;
+            const TEN_MINUTE_TICK_COLOR          = '#555555';
+
+            const FIVE_MINUTE_TICK_LENGTH         = 0.04;
+            const FIVE_MINUTE_TICK_THICKNESS      = 1.50;
+            const FIVE_MINUTE_TICK_COLOR          = '#555555';
 
             const SECOND_TICK_LENGTH            = 0.08;
             const SECOND_TICK_THICKNESS         = 3.50;
@@ -53,14 +79,19 @@
             const FIVE_SECOND_TICK_THICKNESS    = 3.50;
             const FIVE_SECOND_TICK_COLOR        = '#ffffff';
 
-            const FIVE_SECOND_LABEL_FONT        = '40px sans-serif';
+            const FIVE_SECOND_LABEL_FONT        = '40px Courier New';
             const FIVE_SECOND_LABEL_COLOR       = '#ffffff';
             const FIVE_SECOND_LABEL_RADIUS      = 0.80;
 
             const DATETIME_TICKER_BASELINE      = CLOCK_HEIGHT * 0.66;
             const DATETIME_TICKER_LEFT          = CLOCK_WIDTH * 0.50;
-            const DATETIME_TICKER_FONT          = '22px sans-serif';
+            const DATETIME_TICKER_FONT          = '18px Courier New';
             const DATETIME_TICKER_COLOR         = '#cccccc';
+
+            const TIMESTAMP_TICKER_BASELINE     = CLOCK_HEIGHT * 0.66;
+            const TIMESTAMP_TICKER_LEFT         = CLOCK_WIDTH * 0.50;
+            const TIMESTAMP_TICKER_FONT         = '18px Courier New';
+            const TIMESTAMP_TICKER_COLOR        = '#cccccc';
 
             // ==========
 
@@ -78,42 +109,75 @@
 
             function draw_clock() {
                 const time = utc_now();
-                const ss = time.getUTCSeconds();
-                const ms = time.getUTCMilliseconds();
-                
+
+                const hh = 1.0 * time.getUTCHours();
+                const mm = 1.0 * time.getUTCMinutes();
+                const ss = 1.0 * time.getUTCSeconds();
+                const ms = 1.0 * time.getUTCMilliseconds();
+
                 // Redraw the clock on every tick
                 clear();
-                draw_ticks(0.25 * 1000, QUARTER_SECOND_TICK_LENGTH, QUARTER_SECOND_TICK_COLOR, QUARTER_SECOND_TICK_THICKNESS);
-                draw_ticks(1.00 * 1000, SECOND_TICK_LENGTH,         SECOND_TICK_COLOR,         SECOND_TICK_THICKNESS);
-                draw_ticks(5.00 * 1000, FIVE_SECOND_TICK_LENGTH,    FIVE_SECOND_TICK_COLOR,    FIVE_SECOND_TICK_THICKNESS);
-                draw_formatted_time(utc_time_formatted(time), DATETIME_TICKER_COLOR);
-                draw_five_second_labels();
-                draw_second_arm((ss * 1000) + ms);
+
+                // 5-minute ticks
+                //draw_ticks(24 * 12, FIVE_MINUTE_TICK_LENGTH, FIVE_MINUTE_TICK_COLOR, FIVE_MINUTE_TICK_THICKNESS);
+
+                // 10-minute ticks
+                draw_ticks(24 * 6, TEN_MINUTE_TICK_LENGTH, TEN_MINUTE_TICK_COLOR, TEN_MINUTE_TICK_THICKNESS);
+
+                // 30-minute ticks
+                draw_ticks(24 * 2, HALF_HOUR_TICK_LENGTH, HALF_HOUR_TICK_COLOR, HALF_HOUR_TICK_THICKNESS);
+
+                // 1-hour ticks
+                draw_ticks(24, HOUR_TICK_LENGTH, HOUR_TICK_COLOR, HOUR_TICK_THICKNESS);
+
+                draw_datetime(utc_time_formatted(time), DATETIME_TICKER_COLOR);
+
+                draw_timestamp(Number(time));
+
+                draw_hour_labels();
+
+                draw_hour_arm((hh * 60 * 60 * 1000) + (mm * 60 * 1000) + (ss * 1000) + (ms), 24 * 60 * 60 * 1000);
+
+                draw_second_arm((ss * 1000) + ms, 60 * 1000);
             }
 
             function clear() {
                 clock2d.clearRect(0, 0, CLOCK_WIDTH, CLOCK_HEIGHT);
             }
 
-            function draw_formatted_time(str, color) {
+            function draw_datetime(str, color) {
                 clock2d.font = DATETIME_TICKER_FONT;
                 clock2d.fillStyle = DATETIME_TICKER_COLOR;
-                clock2d.textAlign = 'left';
+                clock2d.textAlign = 'right';
                 clock2d.textBaseline = 'bottom';
 
                 const align_time = utc_time_formatted(new Date(0));
                 const align_time_measure = clock2d.measureText(align_time);
-                const left = CLOCK_CENTER_X - (0.5 * align_time_measure.width);
+                const right = CLOCK_CENTER_X + (0.5 * align_time_measure.width);
                 const baseline = DATETIME_TICKER_BASELINE;
 
-                clock2d.fillText(str, left, baseline);               
+                clock2d.fillText(str, right, baseline);
             }
 
-            function draw_second_arm(ms) {
+            function draw_timestamp(str, color) {
+                clock2d.font = TIMESTAMP_TICKER_FONT;
+                clock2d.fillStyle = TIMESTAMP_TICKER_COLOR;
+                clock2d.textAlign = 'right';
+                clock2d.textBaseline = 'bottom';
+
+                const align_time = utc_time_formatted(new Date(0));
+                const align_time_measure = clock2d.measureText(align_time);
+                const right = CLOCK_CENTER_X + (0.5 * align_time_measure.width);
+                const baseline = TIMESTAMP_TICKER_BASELINE;
+
+                clock2d.fillText(str, right, baseline + 30);
+            }
+
+            function draw_second_arm(position, interval) {
 
                 // 'from' pixels from the center
 
-                const arm_angle = ms_to_angle(ms);
+                const arm_angle = clock_turns_to_radians((position * 1.0) / interval); //ms_to_angle(ms);
 
                 clock2d.lineWidth = SECOND_ARM_THICKNESS;
                 clock2d.strokeStyle = SECOND_ARM_COLOR;
@@ -128,6 +192,23 @@
                 draw_radius(clock2d, CLOCK_CENTER_X, CLOCK_CENTER_Y, CLOCK_RADIUS, arm_angle + Math.PI, SECOND_ARM_FIXTURE_RADIUS, SECOND_ARM_TAIL_LENGTH);
             }
 
+            function draw_hour_arm(position, interval) {
+
+                const arm_angle = clock_turns_to_radians((position * 1.0) / interval);
+
+                clock2d.lineWidth = HOUR_ARM_THICKNESS;
+                clock2d.strokeStyle = HOUR_ARM_COLOR;
+
+                // Draw the hand fixture
+                draw_circle(clock2d, CLOCK_CENTER_X, CLOCK_CENTER_Y, HOUR_ARM_FIXTURE_RADIUS, CLOCK_RADIUS);
+
+                // Draw the main part of the arm
+                draw_radius(clock2d, CLOCK_CENTER_X, CLOCK_CENTER_Y, CLOCK_RADIUS, arm_angle, HOUR_ARM_FIXTURE_RADIUS, HOUR_ARM_LENGTH);
+
+                // Draw the tail
+                draw_radius(clock2d, CLOCK_CENTER_X, CLOCK_CENTER_Y, CLOCK_RADIUS, arm_angle + Math.PI, HOUR_ARM_FIXTURE_RADIUS, HOUR_ARM_TAIL_LENGTH);
+            }
+
             function utc_now() {
                 return new Date(Date.now());
             }
@@ -139,55 +220,51 @@
                 const hh   = String( utc_time.getUTCHours()        ).padStart(2, '0');
                 const mm   = String( utc_time.getUTCMinutes()      ).padStart(2, '0');
                 const ss   = String( utc_time.getUTCSeconds()      ).padStart(2, '0');
-                const ms   = String( utc_time.getUTCMilliseconds() ).substring(0, 2).padStart(2, '0');
+                const ms   = String( utc_time.getUTCMilliseconds() ).padStart(3, '0');
 
                 return `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}.${ms}`;
+            }
+
+            function clock_turns_to_radians(turn) {
+                // turn=0.5 means a half-turn from the top
+                // like a clock with the zero at the top
+                const FULL_CIRCLE = 2.0 * Math.PI;
+                const QUARTER_CIRCLE = FULL_CIRCLE / 4.0;
+                return (turn * FULL_CIRCLE) - QUARTER_CIRCLE;
             }
 
             // Given arm position in milliseconds (full clock face has 60 * 1000 ms)
             // Return arm angle in radians (relative to x axis)
             function ms_to_angle(ms) {
-                const FULL_CIRCLE = 2.0 * Math.PI;
-                const QUARTER_CIRCLE = FULL_CIRCLE / 4.0;
-                return ((ms / (60.0 * 1000.0)) * FULL_CIRCLE) - QUARTER_CIRCLE;
+                return clock_turns_to_radians(ms / (60.0 * 1000.0));
             }
 
-            function draw_ticks(ms_increment, length, color, thickness) {
+            function draw_ticks(n, length, color, thickness) {
+                // draw n ticks evenly spaced out around the perimeter of the clock
+
                 clock2d.lineWidth = thickness;
                 clock2d.strokeStyle = color;
 
-                let ms = 0;
-                while (ms < (60 * 1000)) {
-                    const arm_angle = ms_to_angle(ms);
-                    draw_radius(clock2d, CLOCK_CENTER_X, CLOCK_CENTER_Y, CLOCK_RADIUS, arm_angle, 1.0 - length, 1.0);
+                const interval = 2.0 * Math.PI / n;
 
-                    ms += ms_increment;
+                for (let i = 0; i < n; i++) {
+                    draw_radius(clock2d, CLOCK_CENTER_X, CLOCK_CENTER_Y, CLOCK_RADIUS, i * interval, 1.0 - length, 1.0);
                 }
             }
 
-            function draw_five_second_labels() {
-
-                
-                clock2d.fillStyle = FIVE_SECOND_LABEL_COLOR;
-                clock2d.font = FIVE_SECOND_LABEL_FONT;
-
-                function draw_at_second(ss) {
-                    const angle = ms_to_angle(ss * 1000);
-                    draw_text_in_circle(clock2d, String(ss), CLOCK_CENTER_X, CLOCK_CENTER_Y, FIVE_SECOND_LABEL_RADIUS, CLOCK_RADIUS, angle);
+            function draw_clock_number_sequence(ctx, start, d, n, x, y, radius, scale) {
+                for (let i = 0; i < n; i++) {
+                    const number = start + (i * d);
+                    const turn = clock_turns_to_radians((i * 1.0) / n);
+                    draw_text_in_circle(ctx, String(number), x, y, radius, scale, turn);
                 }
-                
-                draw_at_second( 5);
-                draw_at_second(10);
-                draw_at_second(15);
-                draw_at_second(20);
-                draw_at_second(25);
-                draw_at_second(30);
-                draw_at_second(35);
-                draw_at_second(40);
-                draw_at_second(45);
-                draw_at_second(50);
-                draw_at_second(55);
-                draw_at_second(60);
+            }
+
+            function draw_hour_labels() {
+                clock2d.fillStyle = HOUR_LABEL_COLOR;
+                clock2d.font = HOUR_LABEL_FONT;
+
+                draw_clock_number_sequence(clock2d, 0, 1, 24, CLOCK_CENTER_X, CLOCK_CENTER_Y, HOUR_LABEL_RADIUS, CLOCK_RADIUS);
             }
 
             // ==========
