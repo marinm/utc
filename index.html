@@ -53,6 +53,10 @@
             const FIVE_SECOND_TICK_THICKNESS    = 3.50;
             const FIVE_SECOND_TICK_COLOR        = '#ffffff';
 
+            const FIVE_SECOND_LABEL_FONT        = '40px sans-serif';
+            const FIVE_SECOND_LABEL_COLOR       = '#ffffff';
+            const FIVE_SECOND_LABEL_RADIUS      = 0.80;
+
             const DATETIME_TICKER_BASELINE      = CLOCK_HEIGHT * 0.66;
             const DATETIME_TICKER_LEFT          = CLOCK_WIDTH * 0.50;
             const DATETIME_TICKER_FONT          = '22px sans-serif';
@@ -83,6 +87,7 @@
                 draw_ticks(1.00 * 1000, SECOND_TICK_LENGTH,         SECOND_TICK_COLOR,         SECOND_TICK_THICKNESS);
                 draw_ticks(5.00 * 1000, FIVE_SECOND_TICK_LENGTH,    FIVE_SECOND_TICK_COLOR,    FIVE_SECOND_TICK_THICKNESS);
                 draw_formatted_time(utc_time_formatted(time), DATETIME_TICKER_COLOR);
+                draw_five_second_labels();
                 draw_second_arm((ss * 1000) + ms);
             }
 
@@ -148,22 +153,41 @@
             }
 
             function draw_ticks(ms_increment, length, color, thickness) {
+                clock2d.lineWidth = thickness;
+                clock2d.strokeStyle = color;
+
                 let ms = 0;
                 while (ms < (60 * 1000)) {
-                    draw_tick(ms, length, color, thickness);
+                    const arm_angle = ms_to_angle(ms);
+                    draw_radius(clock2d, CLOCK_CENTER_X, CLOCK_CENTER_Y, CLOCK_RADIUS, arm_angle, 1.0 - length, 1.0);
+
                     ms += ms_increment;
                 }
             }
 
-            function draw_tick(ms, length, color, thickness) {
-                // length is relative to clock radius, 0...1
+            function draw_five_second_labels() {
 
-                const arm_angle = ms_to_angle(ms);
+                
+                clock2d.fillStyle = FIVE_SECOND_LABEL_COLOR;
+                clock2d.font = FIVE_SECOND_LABEL_FONT;
 
-                clock2d.lineWidth = thickness;
-                clock2d.strokeStyle = color;
-
-                draw_radius(clock2d, CLOCK_CENTER_X, CLOCK_CENTER_Y, CLOCK_RADIUS, arm_angle, 1.0 - length, 1.0);
+                function draw_at_second(ss) {
+                    const angle = ms_to_angle(ss * 1000);
+                    draw_text_in_circle(clock2d, String(ss), CLOCK_CENTER_X, CLOCK_CENTER_Y, FIVE_SECOND_LABEL_RADIUS, CLOCK_RADIUS, angle);
+                }
+                
+                draw_at_second( 5);
+                draw_at_second(10);
+                draw_at_second(15);
+                draw_at_second(20);
+                draw_at_second(25);
+                draw_at_second(30);
+                draw_at_second(35);
+                draw_at_second(40);
+                draw_at_second(45);
+                draw_at_second(50);
+                draw_at_second(55);
+                draw_at_second(60);
             }
 
             // ==========
@@ -187,6 +211,17 @@
                 ctx.beginPath();
                 ctx.arc(x, y, radius * scale, 0, 2 * Math.PI);
                 ctx.stroke();
+            }
+
+            function draw_text_in_circle(ctx, str, center_x, center_y, radius, scale, angle) {
+
+                ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center';
+
+                const x = center_x + (Math.cos(angle) * radius * scale);
+                const y = center_y + (Math.sin(angle) * radius * scale);
+
+                ctx.fillText(str, x, y);
             }
         </script>
     </body>
