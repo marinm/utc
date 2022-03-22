@@ -32,8 +32,6 @@
     <body>
         <canvas id="clock"></canvas>
 
-        <div id="now"></div>
-
         <script>
             const TICK_INTERVAL = 20;
             const CLOCK_WIDTH = 500;
@@ -41,7 +39,16 @@
 
             const CENTER_X = CLOCK_WIDTH / 2.0;
             const CENTER_Y = CLOCK_HEIGHT / 2.0;
-            const RADIUS = (CLOCK_WIDTH / 2) - 10;
+            const RADIUS = (CLOCK_WIDTH / 2.0) - 10;
+
+            // Relative to the clock radius
+            const SMALL_TICK_LENGTH = 0.05;
+            const BIG_TICK_LENGTH = 0.10;
+
+            const TICKER_BASELINE = CLOCK_HEIGHT * 0.66;
+            const TICKER_LEFT = CLOCK_WIDTH * 0.50;
+            const TICKER_FONT = '22px sans-serif';
+            const TICKER_COLOR = '#cccccc';
 
             const timer = setInterval(tick, TICK_INTERVAL);
 
@@ -52,9 +59,49 @@
             const clock2d = document.querySelector("#clock").getContext('2d');
 
             function tick() {
-                const time = utc_now();            
-                document.querySelector("#now").innerHTML = utc_time_formatted(time);
-                draw_clock(time);
+                const time = utc_now();
+                const ss = time.getUTCSeconds();
+                const ms = time.getUTCMilliseconds();          
+
+                clear();
+                draw_ticks(0.25 * 1000, 0.03, "#555555", 3);
+                draw_ticks(1.00 * 1000, 0.06, "#555555", 3);
+                draw_ticks(5.00 * 1000, 0.06, "#FFFFFF", 3);
+                draw_formatted_time(utc_time_formatted(time), TICKER_COLOR);
+                draw_second_arm((ss * 1000) + ms, 3, "orange");
+            }
+
+            function clear() {
+                clock2d.clearRect(0, 0, CLOCK_WIDTH, CLOCK_HEIGHT);
+            }
+
+            function draw_formatted_time(str, color) {
+                clock2d.font = TICKER_FONT;
+                clock2d.fillStyle = TICKER_COLOR;
+                clock2d.textAlign = 'left';
+                clock2d.textBaseline = 'bottom';
+
+                const align_time = utc_time_formatted(new Date(0));
+                const align_time_measure = clock2d.measureText(align_time);
+                const left = CENTER_X - (0.5 * align_time_measure.width);
+                const baseline = TICKER_BASELINE;
+
+                clock2d.fillText(str, left, baseline);               
+            }
+
+            function draw_second_arm(ms, thickness, color) {
+
+                const arm_angle = ms_to_angle(ms);
+
+                const arm_x = CENTER_X + (Math.cos(arm_angle) * RADIUS);
+                const arm_y = CENTER_Y + (Math.sin(arm_angle) * RADIUS);
+
+                clock2d.lineWidth = thickness;
+                clock2d.strokeStyle = color;
+                clock2d.beginPath();
+                clock2d.moveTo(CENTER_X, CENTER_Y);
+                clock2d.lineTo(arm_x, arm_y);
+                clock2d.stroke();
             }
 
             function utc_now() {
@@ -73,45 +120,41 @@
                 return `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}.${ms}`;
             }
 
-            function draw_clock(time) {
-
-                const ss = time.getUTCSeconds();
-                const ms = time.getUTCMilliseconds();
-
-                clock2d.fillStyle = "#000000";
-                clock2d.fillRect(0, 0, CLOCK_WIDTH, CLOCK_HEIGHT);
-
-                clock2d.strokeStyle = "#FFFFFF";
-                clock2d.lineWidth = 1;
-
-                clock2d.beginPath();
-
-                const x = CENTER_X;
-                const y = CENTER_Y;
-                const radius = RADIUS;
-                const start = 0;
-                const end = 2 * Math.PI;
-                clock2d.arc(x, y, radius, start, end, true);
-
-                clock2d.stroke();
-
-                // The clock has 60 * 1000 ms positions
-                // With 0 at the top
-
+            // Given arm position in milliseconds (full clock face has 60 * 1000 ms)
+            // Return arm angle in radians (relative to x axis)
+            function ms_to_angle(ms) {
                 const FULL_CIRCLE = 2.0 * Math.PI;
                 const QUARTER_CIRCLE = FULL_CIRCLE / 4.0;
+                return ((ms / (60.0 * 1000.0)) * FULL_CIRCLE) - QUARTER_CIRCLE;
+            }
 
-                const relative_arm_angle = ((ss * 1000) + ms) / (60.0 * 1000.0);
-                //console.log(ss, ms, relative_arm_angle);
-                const arm_angle = (relative_arm_angle * FULL_CIRCLE) - QUARTER_CIRCLE;
+            function draw_ticks(ms_increment, length, color, thickness) {
+                let ms = 0;
+                while (ms < (60 * 1000)) {
+                    draw_tick(ms, length, color, thickness);
+                    ms += ms_increment;
+                }
+            }
 
-                const arm_x = CENTER_X + (Math.cos(arm_angle) * RADIUS);
-                const arm_y = CENTER_Y + (Math.sin(arm_angle) * RADIUS);
+            function draw_tick(ms, length, color, thickness) {
+                // length is relative to clock radius, 0...1
 
-                clock2d.strokeStyle = "orange";
+                const arm_angle = ms_to_angle(ms);
+
+                const inner_radius = RADIUS * (1.0 - length);
+                const outer_radius = RADIUS;
+
+                const inner_x = CENTER_X + (Math.cos(arm_angle) * inner_radius);
+                const inner_y = CENTER_Y + (Math.sin(arm_angle) * inner_radius);
+
+                const outer_x = CENTER_X + (Math.cos(arm_angle) * outer_radius);
+                const outer_y = CENTER_Y + (Math.sin(arm_angle) * outer_radius);
+
+                clock2d.lineWidth = thickness;
+                clock2d.strokeStyle = color;
                 clock2d.beginPath();
-                clock2d.moveTo(CENTER_X, CENTER_Y);
-                clock2d.lineTo(arm_x, arm_y);
+                clock2d.moveTo(inner_x, inner_y);
+                clock2d.lineTo(outer_x, outer_y);
                 clock2d.stroke();
             }
         </script>
