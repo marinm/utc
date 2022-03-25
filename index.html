@@ -55,21 +55,35 @@
             const HOUR_TICK_THICKNESS           = 3.50;
             const HOUR_TICK_COLOR               = '#ffffff';
 
+
             const HOUR_LABEL_FONT               = '12px Courier New';
             const HOUR_LABEL_COLOR              = '#ffffff';
-            const HOUR_LABEL_RADIUS             = 0.85;
+            const HOUR_LABEL_RADIUS             = 0.95;
+
+            const MINUTE_LABEL_FONT             = '12px Courier New';
+            const MINUTE_LABEL_COLOR            = '#ffffff';
+            const MINUTE_LABEL_RADIUS           = 0.85;
+
+            const SECOND_LABEL_FONT             = '12px Courier New';
+            const SECOND_LABEL_COLOR            = '#ffffff';
+            const SECOND_LABEL_RADIUS           = 0.75;
+
+            const MILLISECOND_LABEL_FONT        = '12px Courier New';
+            const MILLISECOND_LABEL_COLOR       = '#ffffff';
+            const MILLISECOND_LABEL_RADIUS      = 0.65;
+
 
             const HALF_HOUR_TICK_LENGTH         = 0.08;
             const HALF_HOUR_TICK_THICKNESS      = 2.50;
             const HALF_HOUR_TICK_COLOR          = '#555555';
 
-            const TEN_MINUTE_TICK_LENGTH         = 0.04;
-            const TEN_MINUTE_TICK_THICKNESS      = 2.5;
-            const TEN_MINUTE_TICK_COLOR          = '#555555';
+            const TEN_MINUTE_TICK_LENGTH        = 0.04;
+            const TEN_MINUTE_TICK_THICKNESS     = 2.5;
+            const TEN_MINUTE_TICK_COLOR         = '#555555';
 
-            const FIVE_MINUTE_TICK_LENGTH         = 0.04;
-            const FIVE_MINUTE_TICK_THICKNESS      = 1.50;
-            const FIVE_MINUTE_TICK_COLOR          = '#555555';
+            const FIVE_MINUTE_TICK_LENGTH       = 0.04;
+            const FIVE_MINUTE_TICK_THICKNESS    = 1.50;
+            const FIVE_MINUTE_TICK_COLOR        = '#555555';
 
             const SECOND_TICK_LENGTH            = 0.08;
             const SECOND_TICK_THICKNESS         = 3.50;
@@ -83,21 +97,21 @@
             const FIVE_SECOND_LABEL_COLOR       = '#ffffff';
             const FIVE_SECOND_LABEL_RADIUS      = 0.80;
 
-            const DATETIME_TICKER_BASELINE      = CLOCK_HEIGHT * 0.66;
+            const DATETIME_TICKER_BASELINE      = CLOCK_HEIGHT * 0.65;
             const DATETIME_TICKER_LEFT          = CLOCK_WIDTH * 0.50;
-            const DATETIME_TICKER_FONT          = '18px Courier New';
+            const DATETIME_TICKER_FONT          = '12px Courier New';
             const DATETIME_TICKER_COLOR         = '#cccccc';
 
-            const TIMESTAMP_TICKER_BASELINE     = CLOCK_HEIGHT * 0.66;
+            const TIMESTAMP_TICKER_BASELINE     = CLOCK_HEIGHT * 0.6;
             const TIMESTAMP_TICKER_LEFT         = CLOCK_WIDTH * 0.50;
-            const TIMESTAMP_TICKER_FONT         = '18px Courier New';
+            const TIMESTAMP_TICKER_FONT         = '12px Courier New';
             const TIMESTAMP_TICKER_COLOR        = '#cccccc';
 
             // ==========
 
             const clock = document.querySelector("#clock");
             clock.width = CLOCK_WIDTH;
-            clock.height = CLOCK_HEIGHT;
+            clock.height = CLOCK_HEIGHT * 1.2;
 
             const clock2d = clock.getContext('2d');
 
@@ -121,30 +135,36 @@
                 // 5-minute ticks
                 //draw_ticks(0, 24 * 12, FIVE_MINUTE_TICK_LENGTH, FIVE_MINUTE_TICK_COLOR, FIVE_MINUTE_TICK_THICKNESS);
 
-                const ms_turn_angle = clock_turns_to_radians((ss * 1000) + ms) / (60 * 1000);
+                const ms_turn = -1 * (ms / 1000);
+                const ss_turn = -1 * (((ss * 1000) + ms) / (60 * 1000));
+                const mm_turn = -1 * (((mm * 60 * 1000) + (ss * 1000) + ms) / (60 * 60 * 1000));
+                const hh_turn = -1 * (((hh * 60 * 60 * 1000) + (mm * 60 * 1000) + (ss * 1000) + (ms)) / (24 * 60 * 60 * 1000));
 
                 // 10-minute ticks
-                draw_ticks(ms_turn_angle, 24 * 6, TEN_MINUTE_TICK_LENGTH, TEN_MINUTE_TICK_COLOR, TEN_MINUTE_TICK_THICKNESS);
+                //draw_ticks(hh_turn_angle, 24 * 6, TEN_MINUTE_TICK_LENGTH, TEN_MINUTE_TICK_COLOR, TEN_MINUTE_TICK_THICKNESS);
 
                 // 30-minute ticks
-                draw_ticks(ms_turn_angle, 24 * 2, HALF_HOUR_TICK_LENGTH, HALF_HOUR_TICK_COLOR, HALF_HOUR_TICK_THICKNESS);
+                //draw_ticks(hh_turn_angle, 24 * 2, HALF_HOUR_TICK_LENGTH, HALF_HOUR_TICK_COLOR, HALF_HOUR_TICK_THICKNESS);
 
                 // 1-hour ticks
-                draw_ticks(ms_turn_angle, 24, HOUR_TICK_LENGTH, HOUR_TICK_COLOR, HOUR_TICK_THICKNESS);
+                //draw_ticks(hh_turn_angle, 24, HOUR_TICK_LENGTH, HOUR_TICK_COLOR, HOUR_TICK_THICKNESS);
+
+                draw_millisecond_labels(ms_turn);
+                draw_hour_labels(hh_turn);
+                draw_minute_labels(mm_turn);
+                draw_second_labels(ss_turn);
 
                 draw_datetime(utc_time_formatted(time), DATETIME_TICKER_COLOR);
 
                 draw_timestamp(Number(time));
 
-                draw_hour_labels(ms_turn_angle);
-
                 //draw_hour_arm((hh * 60 * 60 * 1000) + (mm * 60 * 1000) + (ss * 1000) + (ms), 24 * 60 * 60 * 1000);
 
-                draw_second_arm((ss * 1000) + ms, 60 * 1000);
+                draw_second_arm(0);
             }
 
             function clear() {
-                clock2d.clearRect(0, 0, CLOCK_WIDTH, CLOCK_HEIGHT);
+                clock2d.clearRect(0, 0, clock.width, clock.height);
             }
 
             function draw_datetime(str, color) {
@@ -170,18 +190,16 @@
                 const align_time = utc_time_formatted(new Date(0));
                 const align_time_measure = clock2d.measureText(align_time);
                 const right = CLOCK_CENTER_X + (0.5 * align_time_measure.width);
-                const baseline = TIMESTAMP_TICKER_BASELINE;
+                const baseline = DATETIME_TICKER_BASELINE;
 
-                clock2d.fillText(str, right, baseline + 30);
+                clock2d.fillText(str, right, baseline + 15);
             }
 
-            function draw_second_arm(position, interval) {
+            function draw_second_arm(turn) {
 
                 // 'from' pixels from the center
 
-                position = 0;
-
-                const arm_angle = clock_turns_to_radians((position * 1.0) / interval); //ms_to_angle(ms);
+                const arm_angle = clock_turns_to_radians(turn);
 
                 clock2d.lineWidth = SECOND_ARM_THICKNESS;
                 clock2d.strokeStyle = SECOND_ARM_COLOR;
@@ -229,20 +247,6 @@
                 return `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}.${ms}`;
             }
 
-            function clock_turns_to_radians(turn) {
-                // turn=0.5 means a half-turn from the top
-                // like a clock with the zero at the top
-                const FULL_CIRCLE = 2.0 * Math.PI;
-                const QUARTER_CIRCLE = FULL_CIRCLE / 4.0;
-                return (turn * FULL_CIRCLE) - QUARTER_CIRCLE;
-            }
-
-            // Given arm position in milliseconds (full clock face has 60 * 1000 ms)
-            // Return arm angle in radians (relative to x axis)
-            function ms_to_angle(ms) {
-                return clock_turns_to_radians(ms / (60.0 * 1000.0));
-            }
-
             function draw_ticks(start, n, length, color, thickness) {
                 // draw n ticks evenly spaced out around the perimeter of the clock
                 //
@@ -263,19 +267,49 @@
                 }
             }
 
-            function draw_clock_number_sequence(ctx, start, d, n, x, y, radius, scale, offset) {
+            function draw_clock_number_sequence(ctx, start, d, n, x, y, radius, scale, turn) {
                 for (let i = 0; i < n; i++) {
                     const number = start + (i * d);
-                    const turn = offset + clock_turns_to_radians((i * 1.0) / n);
-                    draw_text_in_circle(ctx, String(number), x, y, radius, scale, turn);
+                    const angle = clock_turns_to_radians(turn + ((i * 1.0) / n));
+                    draw_text_in_circle(ctx, String(number), x, y, radius, scale, angle);
                 }
             }
 
-            function draw_hour_labels(offset) {
+            function draw_hour_labels(turn) {
                 clock2d.fillStyle = HOUR_LABEL_COLOR;
                 clock2d.font = HOUR_LABEL_FONT;
 
-                draw_clock_number_sequence(clock2d, 0, 1, 24, CLOCK_CENTER_X, CLOCK_CENTER_Y, HOUR_LABEL_RADIUS, CLOCK_RADIUS, offset);
+                draw_clock_number_sequence(clock2d, 0, 1, 24, CLOCK_CENTER_X, CLOCK_CENTER_Y, HOUR_LABEL_RADIUS, CLOCK_RADIUS, turn);
+            }
+
+            function draw_minute_labels(turn) {
+                clock2d.fillStyle = MINUTE_LABEL_COLOR;
+                clock2d.font = MINUTE_LABEL_FONT;
+
+                draw_clock_number_sequence(clock2d, 0, 1, 60, CLOCK_CENTER_X, CLOCK_CENTER_Y, MINUTE_LABEL_RADIUS, CLOCK_RADIUS, turn);
+            }
+
+            function draw_second_labels(turn) {
+                clock2d.fillStyle = SECOND_LABEL_COLOR;
+                clock2d.font = SECOND_LABEL_FONT;
+
+                draw_clock_number_sequence(clock2d, 0, 1, 60, CLOCK_CENTER_X, CLOCK_CENTER_Y, SECOND_LABEL_RADIUS, CLOCK_RADIUS, turn);
+            }
+
+            function draw_millisecond_labels(turn) {
+                clock2d.fillStyle = MILLISECOND_LABEL_COLOR;
+                clock2d.font = MILLISECOND_LABEL_FONT;
+
+                draw_clock_number_sequence(clock2d, 0, 100, 10, CLOCK_CENTER_X, CLOCK_CENTER_Y, MILLISECOND_LABEL_RADIUS, CLOCK_RADIUS, turn);
+            }
+
+
+            function clock_turns_to_radians(turn) {
+                // turn is a number 0..1 meaning the progress of a clockwise turn starting from the top
+                // The angle is given in radians (ie. the counter-clockwise angle from horizontal)
+                const FULL_CIRCLE = 2.0 * Math.PI;
+                const QUARTER_CIRCLE = FULL_CIRCLE / 4.0;
+                return (-1 * turn * FULL_CIRCLE) + QUARTER_CIRCLE;
             }
 
             // ==========
@@ -284,10 +318,10 @@
             function draw_radius(ctx, x, y, scale, angle, inner_radius, outer_radius) {
 
                 const inner_x = x + (Math.cos(angle) * inner_radius * scale);
-                const inner_y = y + (Math.sin(angle) * inner_radius * scale);
+                const inner_y = y - (Math.sin(angle) * inner_radius * scale);
 
                 const outer_x = x + (Math.cos(angle) * outer_radius * scale);
-                const outer_y = y + (Math.sin(angle) * outer_radius * scale);
+                const outer_y = y - (Math.sin(angle) * outer_radius * scale);
 
                 ctx.beginPath();
                 ctx.moveTo(inner_x, inner_y);
@@ -307,7 +341,7 @@
                 ctx.textAlign = 'center';
 
                 const x = center_x + (Math.cos(angle) * radius * scale);
-                const y = center_y + (Math.sin(angle) * radius * scale);
+                const y = center_y - (Math.sin(angle) * radius * scale);
 
                 ctx.fillText(str, x, y);
             }
