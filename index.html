@@ -15,13 +15,15 @@
 			color: white;
 			font-family: monospace;
 			display: flex;
+			flex-direction: column;
+			gap: 1ch;
 			justify-content: center;
 			align-items: center;
 		}
 	</style>
 </head>
 <body>
-	<div id="timestamp"></div>
+	UTC <div id="timestamp"></div>
 	<script>
 		setInterval(() => {
 			document.querySelector('#timestamp').innerText = Date.now();
